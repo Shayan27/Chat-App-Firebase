@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chat App</title>
+    <script src='https://cdn.firebase.com/js/client/2.4.0/firebase.js'></script>
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Lato|Open+Sans|Yellowtail|Raleway" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Open Sans';
+        background-image: url('img/message.png');
+      }
+      h1 {
+        text-align: center;
+        font-size: 50px;
+        font-family: "Yellowtail";
+        margin-bottom: 25px;
+      }
+      .msg {
+          margin: 15px 0 20px 15px;
+          padding: 10px;
+          width: calc(100% - 72px);
+          background-color: #beefde;
+          font-family: "Lato";
+          border-radius: 10px;
+          box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+          float: left;
+      }
+      .msg pre {
+        background: transparent;
+        border: 0;
+        font-family: "Lato";
+        padding-left: 0;
+        line-height: 20px;
+        margin: 0;
+        font-size: 14px;
+      }
+      #username, #text {
+        margin: 5px 0px;
+      }
+      button#post {
+        font-family: "Open Sans";
+        line-height: inherit;
+        height: 40px;
+        width: 120px;
+        font-size: 17px;
+        text-align: center;
+        padding: 0 10px;
+      }
+      div#results {
+          height: 320px;
+          overflow: auto;
+          background: #fff;
+          padding: 0 20px 30px 20px;
+          box-shadow: 1px 1px 10px #333;
+      }
+      .pic {
+          background: #B5D264;
+          width: 52px;
+          height: 52px;
+          float: left;
+          border-radius: 50%;
+          margin-top: 15px;
+      }
+      .pic div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #fff;
+        font-size: 20px;
+        text-transform: uppercase;
+        font-family: "Raleway";
+      }
+      .pic b {
+          font-size: 12px;
+          text-align: center;
+          display: flex;
+          justify-content: center;
+          margin-top: 5px;
+          height: 20px;
+          color: #333;
+      }
+      .chatapp {
+        width: 500px;
+        margin: 0 auto;
+      }
+      .chatapp .formfields .input-field:first-child {
+        margin-bottom: 20px;
+      }
+      .chatapp .formfields .input-field label,
+      .chatapp .formfields .input-field input,
+      .chatapp .formfields .input-field textarea {
+        font-size: 14px;
+        font-family: "Lato";
+        font-weight: 400;
+        color: #333;
+      }
+      .chatapp .formfields {
+        padding: 20px 0;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="chatapp">
+        <h1>My Chat App 2017</h1>
+        <div id="results"></div>
+          <div class="formfields">
+            <div class="input-field">
+                  <input id="username" type="text">
+                  <label for="username">Username</label>
+            </div>
+            <div class="input-field">
+              <textarea id="text" class="materialize-textarea"></textarea>
+              <label for="text">Message</label>
+            </div>
+            <button id="post" class="btn-large waves-effect waves-light">Post</a>
+            <!-- <button id="post">Post</button><br/> -->
+          </div>
+      </div>
+    </div>
+
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/materialize.min.js"></script>
+
+
+    <script>
+      var myFirebase = new Firebase('https://chatapp-c5cea.firebaseio.com/');
+      var usernameInput = document.querySelector('#username');
+      var textInput = document.querySelector('#text');
+      var postButton = document.querySelector('#post');
+
+      postButton.addEventListener("click", function() {
+        var msgUser = usernameInput.value;
+        var msgText = textInput.value;
+        if(msgUser != "" && msgText != "") {
+          // replace myFirebase.set(...); with the next line
+          myFirebase.push({username:msgUser, text:msgText});
+          textInput.value = "";
+          // window.setInterval(function() {
+            var elem = document.getElementById('results');
+            elem.scrollTop = elem.scrollHeight;
+          // }, 100);
+        } else {
+          alert("Please fill in the fields");
+        }
+      });
+      
+      var startListening = function() {
+        myFirebase.on('child_added', function(snapshot) {
+          var msg = snapshot.val();
+        
+          var msgUsernameElement = document.createElement("b");
+          var name = msg.username.split(' ');
+          strA = name[0];
+          msgUsernameElement.textContent = strA;
+          
+          var msgTextElement = document.createElement("pre");
+          msgTextElement.textContent = msg.text;
+
+          var pictureElem = document.createElement("div");
+          var arr = msg.username.split(' ');
+          var arr = arr.slice(0,2).join(' ');
+          var matches = arr.match(/\b(\w)/g);
+          pictureElem.textContent = matches.join('');
+
+          var picElement = document.createElement("div");
+          picElement.appendChild(pictureElem);
+          picElement.appendChild(msgUsernameElement);
+
+          var msgElement = document.createElement("div");
+          msgElement.appendChild(msgTextElement);
+
+          var msgContainer = document.createElement("div")
+
+          picElement.className = "pic";
+          document.getElementById("results").appendChild(picElement);
+          msgElement.className = "msg";
+          document.getElementById("results").appendChild(msgElement);
+
+          scrolldown();
+
+          var audio = new Audio('alert.mp3');
+          audio.play();
+        });
+      }
+
+      // Begin listening for data
+      startListening();
+
+      document.getElementById("text").addEventListener("keyup", function(event) {
+      event.preventDefault();
+      if (event.keyCode == 13 && !event.shiftKey) {
+          document.getElementById("post").click();
+      }
+    });
+
+    // $(document).ready (function(){
+    //   setTimeout(function(){ var elem = document.getElementById('results');
+    //   elem.scrollTop = elem.scrollHeight;
+    // }, 2000);
+    // });
+
+    function scrolldown() {
+        var elem = document.getElementById('results');
+        elem.scrollTop = elem.scrollHeight;
+    }
+
+  
+
+    </script>
+
+  </body>
+</html>
